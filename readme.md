@@ -1,8 +1,8 @@
----
+
 # 📥 YT Pro Downloader
 
 A **professional terminal application** for downloading videos and playlists from YouTube (and 1000+ other sites supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp)), with **automatic audio merging, format selection, and built-in conversion** via [FFmpeg](https://ffmpeg.org/).
----
+
 
 ## 🚀 Features
 
