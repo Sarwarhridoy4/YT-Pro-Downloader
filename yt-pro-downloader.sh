@@ -2,7 +2,7 @@
 
 # ==============================
 #  YT Pro Downloader Terminal App
-#  Author: YourName
+#  Author: Sarwar Hossain
 # ==============================
 
 # Colors
