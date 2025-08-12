@@ -1,12 +1,7 @@
-Perfect — I’ll extend the README with **screenshots & example flows** so it looks like a polished open-source project page.
-We’ll use **terminal captures** in code blocks and placeholder image links (you can replace them later with real screenshots).
-
 ---
-
 # 📥 YT Pro Downloader
 
 A **professional terminal application** for downloading videos and playlists from YouTube (and 1000+ other sites supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp)), with **automatic audio merging, format selection, and built-in conversion** via [FFmpeg](https://ffmpeg.org/).
-
 ---
 
 ## 🚀 Features
@@ -21,9 +16,9 @@ A **professional terminal application** for downloading videos and playlists fro
 ✅ **Automatic installation** of yt-dlp & FFmpeg on Linux/macOS
 ✅ Works on:
 
-* **Linux**
-* **macOS**
-* **Windows** (via Git Bash, WSL, or manual setup)
+- **Linux**
+- **macOS**
+- **Windows** (via Git Bash, WSL, or manual setup)
 
 ---
 
@@ -59,8 +54,8 @@ chmod +x yt-pro-downloader.sh
 
 The script **automatically installs**:
 
-* **yt-dlp**
-* **FFmpeg**
+- **yt-dlp**
+- **FFmpeg**
 
 **Linux**: Supported → `apt`, `dnf`, `pacman`
 **macOS**: Installed via Homebrew (brew will be installed if missing)
@@ -119,8 +114,8 @@ The script lists **all available formats**:
 Enter format code (leave blank for best quality):
 ```
 
-* Leave blank for **best video + best audio**
-* If you pick a **video-only format**, it will **automatically add the best audio**.
+- Leave blank for **best video + best audio**
+- If you pick a **video-only format**, it will **automatically add the best audio**.
 
 ![Format List](https://example.com/screenshots/formats.png)
 
@@ -128,8 +123,8 @@ Enter format code (leave blank for best quality):
 
 ### Step 4: Download
 
-* **Single videos** → saved to current folder
-* **Playlists** → saved inside a folder named after the playlist
+- **Single videos** → saved to current folder
+- **Playlists** → saved inside a folder named after the playlist
 
 ```plaintext
 Downloading...
@@ -189,5 +184,3 @@ The author is **not responsible** for misuse.
 ## 📝 License
 
 MIT License — You are free to modify and share, but **use responsibly**.
-
-
