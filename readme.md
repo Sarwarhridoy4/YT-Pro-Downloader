@@ -6,14 +6,14 @@ A **professional terminal application** for downloading videos and playlists fro
 
 ## 🚀 Features
 
-✅ **Interactive terminal UI** with colorful prompts
-✅ **Single video or full playlist** download modes
-✅ **Automatic detection** of video-only formats → merges with best audio
-✅ **Lists all available formats** before download
-✅ **Best quality by default** if no format is specified
-✅ **Custom output format conversion** (MP4, MP3, MKV, WAV, etc.) via FFmpeg
-✅ **Playlist organization** into a named folder
-✅ **Automatic installation** of yt-dlp & FFmpeg on Linux/macOS
+- ✅ **Interactive terminal UI** with colorful prompts
+- ✅ **Single video or full playlist** download modes
+- ✅ **Automatic detection** of video-only formats → merges with best audio
+- ✅ **Lists all available formats** before download
+- ✅ **Best quality by default** if no format is specified
+- ✅ **Custom output format conversion** (MP4, MP3, MKV, WAV, etc.) via FFmpeg
+- ✅ **Playlist organization** into a named folder
+- ✅ **Automatic installation** of yt-dlp & FFmpeg on Linux/macOS
 ✅ Works on:
 
 - **Linux**
