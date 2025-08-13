@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================
-#  YT Pro Downloader Terminal App v2.3
+#  YT Pro Downloader Terminal App v2.4
 #  Author: Sarwar Hossain
 # ==============================
 
@@ -63,7 +63,7 @@ update_2line_ui() {
 # ---------- Banner ----------
 clear
 printf "${CYAN}=============================================${RESET}\n"
-printf "${GREEN}${BOLD}         YT Pro Downloader v2.3${RESET}\n"
+printf "${GREEN}${BOLD}         YT Pro Downloader v2.4${RESET}\n"
 printf "${YELLOW}     Powered by yt-dlp + ffmpeg${RESET}\n"
 printf "${CYAN}=============================================${RESET}\n\n"
 printf "${HIDE_CURSOR}"
@@ -135,10 +135,11 @@ printf "  1) Single Video\n"; printf "  2) Playlist\n"
 MODE=""
 echo -n "Enter choice (1 or 2): "; IFS= read MODE
 
-PLAYLIST_FLAG=""; RANGE_FLAG=""; VIDEO_URL=""; FIRST_ITEM=1
+PLAYLIST_FLAG=""; RANGE_FLAG=""; VIDEO_URL=""; FIRST_ITEM=1; OUTPUT_TEMPLATE=""
 if [[ "$MODE" == "1" ]]; then
   echo -n "🎯 Enter video URL: "; IFS= read VIDEO_URL
   PLAYLIST_FLAG="--no-playlist"
+  OUTPUT_TEMPLATE="%(title)s.%(ext)s"
   printf "\n${YELLOW}📡 Fetching available formats…${RESET}\n"
   yt-dlp -F "$VIDEO_URL"
 elif [[ "$MODE" == "2" ]]; then
@@ -149,6 +150,7 @@ elif [[ "$MODE" == "2" ]]; then
     FIRST_ITEM="${RANGE%%-*}"; [[ -z "$FIRST_ITEM" ]] && FIRST_ITEM=1
   fi
   PLAYLIST_FLAG="--yes-playlist"
+  OUTPUT_TEMPLATE="%(playlist_title)s/%(playlist_index)02d - %(title)s.%(ext)s"
   printf "\n${YELLOW}📡 Fetching formats for playlist item %s…${RESET}\n" "$FIRST_ITEM"
   yt-dlp -F --playlist-items "$FIRST_ITEM" "$VIDEO_URL"
 else
@@ -168,7 +170,7 @@ fi
 # ---------- Download with Live Progress ----------
 download_list="$log_dir/downloaded_files.txt"; : > "$download_list"
 printf "\n${GREEN}🚀 Starting download…${RESET}\n"; printf "%s\n%s\n" " " " "
-stdbuf -oL yt-dlp -f "$DL_FORMAT" $PLAYLIST_FLAG $RANGE_FLAG "$VIDEO_URL" \
+stdbuf -oL yt-dlp -f "$DL_FORMAT" $PLAYLIST_FLAG $RANGE_FLAG -o "$OUTPUT_TEMPLATE" "$VIDEO_URL" \
   --newline --progress-template "%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s|%(filename)s" \
   --print "before_dl:START|%(filename)s" \
   --print "after_move:FILE|%(filepath)s" \
@@ -190,7 +192,7 @@ printf "${GREEN}✅ Download(s) finished.${RESET}\n"
 echo -n "🔄 Convert file(s)? (y/n): "; IFS= read CONVERT
 if [[ "$CONVERT" =~ ^[Yy]$ ]]; then
   echo -n "🎯 Enter output format: "; IFS= read OUTPUT_FORMAT
-  [[ ! -s "$download_list" ]] && find . -maxdepth 1 -type f -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 3 | awk '{ $1=""; sub(/^ /,""); print }' > "$download_list"
+  [[ ! -s "$download_list" ]] && find . -maxdepth 3 -type f -printf "%T@ %p\n" 2>/dev/null | sort -nr | head -n 10 | awk '{ $1=""; sub(/^ /,""); print }' > "$download_list"
   while IFS= read -r in_file; do
     [[ -z "$in_file" || ! -f "$in_file" ]] && continue
     out_file="${in_file%.*}.$OUTPUT_FORMAT"
