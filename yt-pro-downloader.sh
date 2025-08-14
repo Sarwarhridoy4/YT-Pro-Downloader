@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================
-#  YT Pro Downloader Terminal App v2.4
-#  Author: Sarwar Hossain
+#  YT Pro Downloader Terminal App v2.6
+#  Author: Sarwar Hossain + UX Improvements
 # ==============================
 
 # ---------- Colors & UI ----------
@@ -63,7 +63,7 @@ update_2line_ui() {
 # ---------- Banner ----------
 clear
 printf "${CYAN}=============================================${RESET}\n"
-printf "${GREEN}${BOLD}         YT Pro Downloader v2.4${RESET}\n"
+printf "${GREEN}${BOLD}         YT Pro Downloader v2.6${RESET}\n"
 printf "${YELLOW}     Powered by yt-dlp + ffmpeg${RESET}\n"
 printf "${CYAN}=============================================${RESET}\n\n"
 printf "${HIDE_CURSOR}"
@@ -144,13 +144,57 @@ if [[ "$MODE" == "1" ]]; then
   yt-dlp -F "$VIDEO_URL"
 elif [[ "$MODE" == "2" ]]; then
   echo -n "📜 Enter playlist URL: "; IFS= read VIDEO_URL
-  echo -n "🎯 Enter video range (1-5, blank=all): "; IFS= read RANGE
-  if [[ -n "$RANGE" ]]; then
-    RANGE_FLAG="--playlist-items $RANGE"
-    FIRST_ITEM="${RANGE%%-*}"; [[ -z "$FIRST_ITEM" ]] && FIRST_ITEM=1
+  printf "\n${YELLOW}📡 Fetching playlist details…${RESET}\n"
+
+  # Fetch all playlist items
+  mapfile -t playlist_items < <(
+    yt-dlp --flat-playlist --print "%(playlist_index)03d|%(title)s|%(duration_string)s" "$VIDEO_URL"
+  )
+
+  total=${#playlist_items[@]}
+  page_size=10
+  start=0
+  selections=()
+
+  while (( start < total )); do
+    clear
+    printf "${CYAN}${BOLD}Playlist Videos (Items %d to %d of %d):${RESET}\n" $((start+1)) $((start+page_size>total?total:start+page_size)) $total
+    for ((i=start; i<start+page_size && i<total; i++)); do
+      idx="${playlist_items[$i]%%|*}"
+      rest="${playlist_items[$i]#*|}"
+      title="${rest%%|*}"
+      dur="${rest#*|}"
+      printf "${MAGENTA}%s${RESET}) %s ${DIM}[%s]${RESET}\n" "$idx" "$title" "$dur"
+    done
+    echo
+    echo "n) Load next 10 items"
+    echo "0) Done selecting"
+    echo -n "🎯 Enter selections (e.g., 1,3,5-7): "
+    IFS= read choice
+
+    if [[ "$choice" == "n" || "$choice" == "N" ]]; then
+      start=$((start+page_size))
+      continue
+    elif [[ "$choice" == "0" ]]; then
+      break
+    elif [[ -n "$choice" ]]; then
+      selections+=("$choice")
+    fi
+
+    start=$((start+page_size))
+  done
+
+  if (( ${#selections[@]} > 0 )); then
+    RANGE_FLAG="--playlist-items $(IFS=,; echo "${selections[*]}")"
+    FIRST_ITEM=$(echo "${selections[0]}" | cut -d',' -f1 | cut -d'-' -f1)
+  else
+    RANGE_FLAG=""
+    FIRST_ITEM=1
   fi
+
   PLAYLIST_FLAG="--yes-playlist"
   OUTPUT_TEMPLATE="%(playlist_title)s/%(playlist_index)02d - %(title)s.%(ext)s"
+
   printf "\n${YELLOW}📡 Fetching formats for playlist item %s…${RESET}\n" "$FIRST_ITEM"
   yt-dlp -F --playlist-items "$FIRST_ITEM" "$VIDEO_URL"
 else

@@ -1,3 +1,5 @@
+---
+
 # 📥 YT Pro Downloader
 
 A **professional terminal application** for downloading videos and playlists from YouTube (and 1000+ other sites supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp)), with **automatic audio merging, format selection, and built-in conversion** via [FFmpeg](https://ffmpeg.org/).
@@ -6,17 +8,18 @@ A **professional terminal application** for downloading videos and playlists fro
 
 - ✅ **Interactive terminal UI** with colorful prompts
 - ✅ **Single video or full playlist** download modes
+- ✅ **Paged playlist selection** — loads **10 items at a time**, lets you pick from multiple pages, and accumulates selections before download
 - ✅ **Automatic detection** of video-only formats → merges with best audio
 - ✅ **Lists all available formats** before download
 - ✅ **Best quality by default** if no format is specified
 - ✅ **Custom output format conversion** (MP4, MP3, MKV, WAV, etc.) via FFmpeg
 - ✅ **Playlist organization** into a named folder
 - ✅ **Automatic installation** of yt-dlp & FFmpeg on Linux/macOS
-  ✅ Works on:
+- ✅ Works on:
 
-- **Linux**
-- **macOS**
-- **Windows** (via Git Bash, WSL, or manual setup)
+  - **Linux**
+  - **macOS**
+  - **Windows** (via Git Bash, WSL, or manual setup)
 
 ---
 
@@ -66,13 +69,11 @@ The script **automatically installs**:
 When you run the script, you’ll see:
 
 ```plaintext
-======================================
-      YT Pro Downloader v1.0
+=============================================
+      YT Pro Downloader v2.6
   Powered by yt-dlp + ffmpeg
-======================================
+=============================================
 ```
-
-![Welcome Screen](https://example.com/screenshots/welcome.png)
 
 ---
 
@@ -85,25 +86,48 @@ Select download mode:
 Enter choice (1 or 2):
 ```
 
-![Mode Selection](ss.png)
-
 ---
 
-### Step 2: Enter URL
+### Step 2: Playlist Mode – Paged Selection
+
+When you choose **Playlist**:
+
+- The script fetches the **entire playlist** but shows **only 10 videos at a time**.
+- You can:
+
+  - Enter video numbers: `1,3,5-7` → select multiple
+  - Press `n` → load next 10 items
+  - Press `0` → done selecting
+
+Selections **accumulate across pages** until you choose `0`.
 
 Example:
 
 ```plaintext
-Enter video URL: https://www.youtube.com/watch?v=abc123
+Playlist Videos (Items 1 to 10 of 34):
+1) Video Title One [12:34]
+2) Video Title Two [08:21]
+...
+n) Load next 10 items
+0) Done selecting
+🎯 Enter selections: 1,3,5
 ```
 
-![Enter URL](https://example.com/screenshots/url.png)
+After loading more pages:
+
+```plaintext
+Playlist Videos (Items 11 to 20 of 34):
+...
+🎯 Enter selections: 12,15
+```
+
+When finished, the script will download **only your chosen videos**.
 
 ---
 
 ### Step 3: Choose Format
 
-The script lists **all available formats**:
+The script lists **all available formats** for the **first selected video**:
 
 ```plaintext
 137 mp4 1920x1080 video only
@@ -115,8 +139,6 @@ Enter format code (leave blank for best quality):
 - Leave blank for **best video + best audio**
 - If you pick a **video-only format**, it will **automatically add the best audio**.
 
-![Format List](https://example.com/screenshots/formats.png)
-
 ---
 
 ### Step 4: Download
@@ -125,11 +147,9 @@ Enter format code (leave blank for best quality):
 - **Playlists** → saved inside a folder named after the playlist
 
 ```plaintext
-Downloading...
-100% of 358.96MiB in 01:20
+📥 Downloading: My Video Title.mp4
+[████████████░░░░░░░░░░░░]  65%  2.3MiB/s  ETA: 00:20
 ```
-
-![Downloading](https://example.com/screenshots/download.png)
 
 ---
 
@@ -138,10 +158,8 @@ Downloading...
 ```plaintext
 Do you want to convert the file(s) to another format? (y/n): y
 Enter output format (e.g., mp4, mp3, mkv, wav): mp3
-Conversion completed: myvideo.mp3
+✔ Converted: myvideo.mp3
 ```
-
-![Conversion](https://example.com/screenshots/conversion.png)
 
 ---
 
@@ -154,6 +172,14 @@ Conversion completed: myvideo.mp3
 # Leave format blank when prompted
 ```
 
+**Download specific videos from a playlist**
+
+```bash
+./yt-pro-downloader.sh
+# Choose "Playlist" mode
+# Pick videos across pages using the 10-at-a-time system
+```
+
 **Download specific format and convert to MP3**
 
 ```bash
@@ -162,27 +188,7 @@ Conversion completed: myvideo.mp3
 # Enter output format mp3
 ```
 
-**Download entire playlist into folder**
-
-```bash
-./yt-pro-downloader.sh
-# Choose "Playlist" mode
-```
-
 ---
-
-### Changes Made:
-
-- **Playlist Range**: Added `--playlist-items $RANGE` for downloading only specific videos.
-- **Single Quality for All Playlist Videos**: Format is chosen once and applied to every item.
-- **Styled Output**:
-
-  - Icons (`🎯`, `📜`, `🚀`) for better UX.
-  - Bold titles and section separators.
-  - Progress output colorized.
-  - Success ✅ markers.
-
-- **Still Keeps Original Single Video Logic**.
 
 ## ⚠️ Legal Notice
 
@@ -195,3 +201,5 @@ The author is **not responsible** for misuse.
 ## 📝 License
 
 MIT License — You are free to modify and share, but **use responsibly**.
+
+---
