@@ -146,7 +146,6 @@ elif [[ "$MODE" == "2" ]]; then
   echo -n "📜 Enter playlist URL: "; IFS= read VIDEO_URL
   printf "\n${YELLOW}📡 Fetching playlist details…${RESET}\n"
 
-  # Fetch all playlist items
   mapfile -t playlist_items < <(
     yt-dlp --flat-playlist --print "%(playlist_index)03d|%(title)s|%(duration_string)s" "$VIDEO_URL"
   )
@@ -211,25 +210,21 @@ else
   fi
 fi
 
-# ---------- Download with Live Progress ----------
+# ---------- Download without Progress Bar ----------
 download_list="$log_dir/downloaded_files.txt"; : > "$download_list"
-printf "\n${GREEN}🚀 Starting download…${RESET}\n"; printf "%s\n%s\n" " " " "
-stdbuf -oL yt-dlp -f "$DL_FORMAT" $PLAYLIST_FLAG $RANGE_FLAG -o "$OUTPUT_TEMPLATE" "$VIDEO_URL" \
-  --newline --progress-template "%(progress._percent_str)s|%(progress._speed_str)s|%(progress._eta_str)s|%(filename)s" \
-  --print "before_dl:START|%(filename)s" \
-  --print "after_move:FILE|%(filepath)s" \
-| while IFS= read -r line; do
-    case "$line" in
-      START\|*) file="${line#START|}"; update_2line_ui "${CYAN}📥 Downloading:${RESET} ${MAGENTA}$(basename "$file")${RESET}" 0 "${YELLOW}Speed:${RESET} --  ${YELLOW}ETA:${RESET} --" ;;
-      FILE\|*) printf "%s\n" "${line#FILE|}" >> "$download_list" ;;
-      *\|*\|*\|*) percent="${line%%|*}"; rest="${line#*|}"; speed="${rest%%|*}"; rest="${rest#*|}"; eta="${rest%%|*}"; file="${rest#*|}"
-        percent_int="${percent//[^0-9.]}"
-        percent_int="${percent_int%.*}"; [[ -z "$percent_int" ]] && percent_int=0
-        header="${CYAN}📥 Downloading:${RESET} ${MAGENTA}$(basename "$file")${RESET}"
-        tail_text="${YELLOW}Speed:${RESET} ${speed:-N/A}  ${YELLOW}ETA:${RESET} ${eta:-N/A}"
-        update_2line_ui "$header" "$percent_int" "$tail_text" ;;
-    esac
-done
+printf "\n${GREEN}🚀 Starting download…${RESET}\n\n"
+
+yt-dlp -f "$DL_FORMAT" $PLAYLIST_FLAG $RANGE_FLAG -o "$OUTPUT_TEMPLATE" "$VIDEO_URL"
+
+# Save downloaded files for conversion
+if [[ "$MODE" == "1" ]]; then
+  printf "%s\n" "$(basename "$VIDEO_URL")" >> "$download_list"
+else
+  playlist_folder="$(yt-dlp --get-filename -o "$OUTPUT_TEMPLATE" --playlist-items "$FIRST_ITEM" "$VIDEO_URL" | head -n1)"
+  playlist_dir="${playlist_folder%/*}"
+  find "$playlist_dir" -type f -iname "*.*" > "$download_list"
+fi
+
 printf "${GREEN}✅ Download(s) finished.${RESET}\n"
 
 # ---------- Conversion ----------
