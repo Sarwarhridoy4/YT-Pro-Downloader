@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================
-#  YT Pro Downloader Terminal App v2.6
+#  YT Pro Downloader Terminal App v2.8
 #  Author: Sarwar Hossain + UX Improvements
 # ==============================
 
@@ -15,7 +15,7 @@ trap cleanup EXIT
 # ---------- Banner ----------
 clear
 printf "${CYAN}=============================================${RESET}\n"
-printf "${GREEN}${BOLD}         YT Pro Downloader v2.6${RESET}\n"
+printf "${GREEN}${BOLD}         YT Pro Downloader v2.8${RESET}\n"
 printf "${YELLOW}     Powered by yt-dlp + ffmpeg${RESET}\n"
 printf "${CYAN}=============================================${RESET}\n\n"
 printf "${HIDE_CURSOR}"
@@ -66,49 +66,98 @@ read -rp "Enter choice (1 or 2): " MODE
 
 VIDEO_URL=""
 PLAYLIST_FLAG=""; RANGE_FLAG=""; FIRST_ITEM=1; OUTPUT_TEMPLATE=""
+selected_titles=()
+
 if [[ "$MODE" == "1" ]]; then
   read -rp "🎯 Enter video URL: " VIDEO_URL
   PLAYLIST_FLAG="--no-playlist"
   OUTPUT_TEMPLATE="%(title)s.%(ext)s"
+
 elif [[ "$MODE" == "2" ]]; then
   read -rp "📜 Enter playlist URL: " VIDEO_URL
   PLAYLIST_FLAG="--yes-playlist"
   OUTPUT_TEMPLATE="%(playlist_title)s/%(playlist_index)02d - %(title)s.%(ext)s"
 
-  # Playlist selection
-  mapfile -t playlist_items < <(yt-dlp --flat-playlist --print "%(playlist_index)03d|%(title)s|%(duration_string)s" "$VIDEO_URL")
-  total=${#playlist_items[@]}
+  # ---------- Playlist Pagination ----------
   page_size=10
-  start=0
+  start=1
   selections=()
-  while (( start < total )); do
+
+  while true; do
+    end=$((start+page_size-1))
     clear
-    echo -e "${CYAN}${BOLD}Playlist Videos (Items $((start+1))-$((start+page_size>total?total:start+page_size)) of $total):${RESET}"
-    for ((i=start;i<start+page_size&&i<total;i++)); do
-      idx="${playlist_items[$i]%%|*}"
-      rest="${playlist_items[$i]#*|}"
+    echo -e "${CYAN}${BOLD}Playlist Videos (Items $start-$end):${RESET}"
+
+    mapfile -t page_items < <(yt-dlp --flat-playlist --playlist-items "$start-$end" \
+      --print "%(playlist_index)03d|%(title)s|%(duration_string)s" "$VIDEO_URL")
+
+    if [[ ${#page_items[@]} -eq 0 ]]; then
+      echo -e "${DIM}(No more items)${RESET}"
+      break
+    fi
+
+    for item in "${page_items[@]}"; do
+      idx="${item%%|*}"
+      rest="${item#*|}"
       title="${rest%%|*}"; dur="${rest#*|}"
       echo -e "${MAGENTA}$idx${RESET}) $title ${DIM}[$dur]${RESET}"
     done
+
     echo
-    echo "n) Next 10 items"
+    echo "n) Next $page_size items"
     echo "0) Done selecting"
     read -rp "🎯 Enter selections (e.g., 1,3,5-7): " choice
-    if [[ "$choice" == "n" || "$choice" == "N" ]]; then start=$((start+page_size)); continue
-    elif [[ "$choice" == "0" ]]; then break
-    elif [[ -n "$choice" ]]; then selections+=("$choice"); fi
+
+    if [[ "$choice" == "n" || "$choice" == "N" ]]; then
+      start=$((start+page_size))
+      continue
+    elif [[ "$choice" == "0" ]]; then
+      break
+    elif [[ -n "$choice" ]]; then
+      selections+=("$choice")
+      # save titles for confirmation
+      for sel in $(echo "$choice" | tr ',' ' '); do
+        range_start=$(echo "$sel" | cut -d'-' -f1)
+        range_end=$(echo "$sel" | cut -s -d'-' -f2)
+        [[ -z "$range_end" ]] && range_end=$range_start
+        for i in $(seq "$range_start" "$range_end"); do
+          title=$(yt-dlp --flat-playlist --playlist-items "$i" \
+            --print "%(title)s" "$VIDEO_URL" 2>/dev/null)
+          selected_titles+=("$i) $title")
+        done
+      done
+    fi
+
     start=$((start+page_size))
   done
+
   if (( ${#selections[@]} > 0 )); then
     RANGE_FLAG="--playlist-items $(IFS=,; echo "${selections[*]}")"
     FIRST_ITEM=$(echo "${selections[0]}" | cut -d',' -f1 | cut -d'-' -f1)
-  else RANGE_FLAG=""; FIRST_ITEM=1; fi
+  else
+    RANGE_FLAG=""; FIRST_ITEM=1
+  fi
 else
   echo -e "${RED}Invalid choice.${RESET}"; exit 1
 fi
 
+# ---------- Confirmation ----------
+if [[ "$MODE" == "2" && ${#selected_titles[@]} -gt 0 ]]; then
+  echo -e "\n${YELLOW}📋 You selected the following videos:${RESET}"
+  for t in "${selected_titles[@]}"; do
+    echo "  - $t"
+  done
+  echo
+  read -rp "✅ Proceed with download? (y/n): " CONFIRM
+  [[ ! "$CONFIRM" =~ ^[Yy]$ ]] && echo -e "${RED}❌ Download cancelled.${RESET}" && exit 0
+fi
+
 # ---------- Format ----------
-read -rp "🎥 Enter format code (blank=best): " FORMAT_CODE
+echo -e "${CYAN}📋 Available formats:${RESET}\n"
+yt-dlp -F --playlist-items "$FIRST_ITEM" "$VIDEO_URL"
+
+echo
+read -rp "🎥 Enter format code (blank=best=bestvideo+bestaudio): " FORMAT_CODE
 if [[ -z "$FORMAT_CODE" ]]; then DL_FORMAT="bv*+ba"
 else
   if yt-dlp -F --playlist-items "$FIRST_ITEM" "$VIDEO_URL" | grep -qE "^[[:space:]]*$FORMAT_CODE[[:space:]].*video[[:space:]]only"; then
@@ -133,7 +182,7 @@ fi
 
 echo -e "${GREEN}✅ Download(s) finished.${RESET}\n"
 
-# ---------- Conversion with live textual progress ----------
+# ---------- Conversion ----------
 read -rp "🔄 Convert file(s)? (y/n): " CONVERT
 if [[ "$CONVERT" =~ ^[Yy]$ ]]; then
   read -rp "🎯 Enter output format: " OUTPUT_FORMAT
@@ -149,7 +198,6 @@ if [[ "$CONVERT" =~ ^[Yy]$ ]]; then
         case "$key" in
           out_time_ms)
             if [[ "$filesize_bytes" != "0" ]]; then
-              # rough estimate: percent = out_size / filesize
               out_size=$(stat -c%s "$out_file" 2>/dev/null || stat -f%z "$out_file")
               percent=$(( out_size * 100 / filesize_bytes ))
               [[ $percent -gt 100 ]] && percent=100
